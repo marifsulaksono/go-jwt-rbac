@@ -1,11 +1,13 @@
 package util
 
 import (
-	"fmt"
+	"errors"
 	"go-jwt-rbac/model"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -23,7 +25,35 @@ func GenerateJWT(user model.UserResponse) (string, error) {
 		},
 	})
 
-	fmt.Println(token)
-
 	return token.SignedString([]byte(os.Getenv(secretKey)))
+}
+
+func GetTokenFromHeader(c *gin.Context) (*jwt.Token, error) {
+	authHeader := c.Request.Header.Get("Authorization")
+	if !strings.Contains(authHeader, "Bearer") {
+		return nil, errors.New("authentication required")
+	}
+
+	tokenString := strings.Replace(authHeader, "Bearer ", "", -1)
+	token, _ := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		if method, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("signing method invalid")
+		} else if method != jwt.SigningMethodHS256 {
+			return nil, errors.New("signing method invalid")
+		}
+
+		return []byte(os.Getenv(secretKey)), nil
+	})
+
+	return token, nil
+}
+
+func ValidateAdminToken(token *jwt.Token) error {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+	if ok && token.Valid && role == "admin" {
+		return nil
+	}
+
+	return errors.New("the token provided is not admin")
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-jwt-rbac/config"
 	"go-jwt-rbac/controller"
+	"go-jwt-rbac/middleware"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,7 @@ func StartServer() {
 	routev1.GET("/api/category-products", controller.GetProductCategories)
 
 	adminRoutev1 := routev1.Group("/admin")
+	adminRoutev1.Use(middleware.JWTAdminAuth())
 	adminRoutev1.POST("/category-products", controller.AddProductCategories)
 
 	buyerRoutes := routev1.Group("/api")
