@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"go-jwt-rbac/model"
 	"os"
 	"strings"
@@ -56,4 +57,25 @@ func ValidateAdminToken(token *jwt.Token) error {
 	}
 
 	return errors.New("the token provided is not admin")
+}
+
+func ValidateSellerToken(token *jwt.Token) error {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+	fmt.Println(claims)
+	if ok && token.Valid && role == "seller" {
+		return nil
+	}
+
+	return errors.New("the token provided is not seller")
+}
+
+func ValidateBuyerToken(token *jwt.Token) error {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+	if ok && token.Valid && role == "buyer" {
+		return nil
+	}
+
+	return errors.New("the token provided is not buyer")
 }
